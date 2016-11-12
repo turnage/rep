@@ -1,16 +1,40 @@
 pub fn search<'a>(text: &'a [u8], pattern: &[u8]) -> Option<&'a [u8]> {
-    for i in 0..text.len() {
-        let mut matches = 0;
-        for j in 0..pattern.len() {
-            if text[i + j] == pattern[j] {
-                matches += 1;
-            } else {
-                break;
-            }
+    // frame is the anchor point of the current matching frame. A matching frame
+    // is defined by the alignment of the searched text (text) and the search
+    // pattern (pattern).
+    //
+    // The first frame is at pattern.len() - 1 in text, This lines up the
+    // beginning of the pattern with the beginning of the text:
+    //
+    //     text:    enemy ticket fans
+    //     pattern: ticket
+    //
+    // If frame were incremented by 1, the alignment would be:
+    //
+    //     text:    enemy ticket fans
+    //     pattern:  ticket
+    let mut frame = pattern.len() - 1;
+
+    // Iterate over all the matching frames. This loop will only shift the
+    // matching frame to the right along the searched text, never left.
+    while frame < text.len() {
+        let mut i = frame;
+        let mut j = pattern.len();
+
+        // Compare the pattern to the text in the matching frame starting at the
+        // last byte in the frame and iterating backward.
+        while j > 0 && text[i] == pattern[j - 1] {
+            i -= 1;
+            j -= 1;
         }
-        if matches == pattern.len() {
-            return Some(line_of(text, i, pattern.len()));
+
+        // If we reached the end of the pattern, the entire matching frame
+        // matched, so we record this match.
+        if j == 0 {
+            return Some(line_of(text, i + 1, pattern.len()));
         }
+
+        frame += 1;
     }
     None
 }
