@@ -38,6 +38,11 @@ fn test_search() {
             pattern: "280",
             lines: vec!["..280.."],
         },
+        test_case{
+            text: "1\n..280..\n3",
+            pattern: "7",
+            lines: vec![],
+        },
     ].iter() {
         case.run();
     }
