@@ -3,13 +3,13 @@
 use search;
 use std::str::from_utf8;
 
-struct test_case {
+struct TestCase {
     text: &'static str,
     pattern: &'static str,
     lines: Vec<&'static str>,
 }
 
-impl test_case {
+impl TestCase {
     fn run(&self) {
         let text_bytes = self.text.as_bytes();
         let pattern_bytes = self.pattern.as_bytes();
@@ -28,17 +28,17 @@ impl test_case {
 #[test]
 fn test_search() {
     for case in vec![
-        test_case{
+        TestCase{
             text: "1\n..2..\n3",
             pattern: "2",
             lines: vec!["..2.."],
         },
-        test_case{
+        TestCase{
             text: "1\n..280..\n3",
             pattern: "280",
             lines: vec!["..280.."],
         },
-        test_case{
+        TestCase{
             text: "1\n..280..\n3",
             pattern: "7",
             lines: vec![],
