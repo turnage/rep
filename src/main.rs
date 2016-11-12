@@ -1,5 +1,7 @@
 mod read;
+
 mod search;
+mod search_test;
 
 fn main() {
     let filename = std::env::args().nth(1).unwrap_or(String::from(""));
