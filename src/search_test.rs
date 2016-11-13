@@ -13,13 +13,14 @@ impl TestCase {
     fn run(&self) {
         let text_bytes = self.text.as_bytes();
         let pattern_bytes = self.pattern.as_bytes();
-        let found_lines = match search::search(text_bytes, pattern_bytes) {
-            None => Vec::new(),
-            Some(line_bytes) => match from_utf8(line_bytes) {
-                Err(_) => Vec::new(),
-                Ok(line) => vec![line]
+        let found_lines: Vec<&str> = search::search(text_bytes, pattern_bytes).iter().map(
+            |line_bytes| {
+                match from_utf8(line_bytes) {
+                    Err(_) => "",
+                    Ok(line) => line
+                }
             }
-        };
+        ).collect();
 
         assert_eq!(&self.lines, &found_lines);
     }

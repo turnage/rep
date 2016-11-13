@@ -175,7 +175,9 @@ impl Guide {
     }
 }
 
-pub fn search<'a>(text: &'a [u8], pattern: &[u8]) -> Option<&'a [u8]> {
+pub fn search<'a>(text: &'a [u8], pattern: &[u8]) -> Vec<&'a [u8]> {
+    let mut lines = Vec::new();
+
     let guide = Guide::from(pattern);
     let mut frame = pattern.len() - 1;
 
@@ -195,12 +197,14 @@ pub fn search<'a>(text: &'a [u8], pattern: &[u8]) -> Option<&'a [u8]> {
         // If we reached the end of the pattern, the entire matching frame
         // matched, so we record this match.
         if j == 0 {
-            return Some(line_of(text, i + 1, pattern.len()));
+            lines.push(line_of(text, i + 1, pattern.len()));
+            frame += pattern.len();
+        } else {
+            frame += guide.skip(text[i], j - 1);
         }
-
-        frame += guide.skip(text[i], j - 1);
     }
-    None
+
+    lines
 }
 
 fn line_of<'a>(text: &'a [u8], start: usize, len: usize) -> &'a [u8] {

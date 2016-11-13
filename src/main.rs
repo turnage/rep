@@ -9,10 +9,9 @@ fn main() {
 
     match read::read(&filename) {
         Err(e) => println!("Failed to read {}: {}", filename, e),
-        Ok(content) => {
-            match search::search(&content, &pattern.as_bytes()) {
-                Some(line) => println!("{}", String::from_utf8_lossy(line)),
-                None => println!("No match found."),
+        Ok(content) =>  {
+            for line in search::search(&content, &pattern.as_bytes()) {
+                println!("{:?}", line);
             }
         }
     }
