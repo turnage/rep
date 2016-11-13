@@ -197,8 +197,9 @@ pub fn search<'a>(text: &'a [u8], pattern: &[u8]) -> Vec<&'a [u8]> {
         // If we reached the end of the pattern, the entire matching frame
         // matched, so we record this match.
         if j == 0 {
-            lines.push(line_of(text, i, pattern.len()));
-            frame += pattern.len();
+            let (line, skip) = line_of(text, i, pattern.len());
+            lines.push(line);
+            frame += skip;
         } else {
             frame += guide.skip(text[i - 1], j - 1);
         }
@@ -207,7 +208,15 @@ pub fn search<'a>(text: &'a [u8], pattern: &[u8]) -> Vec<&'a [u8]> {
     lines
 }
 
-fn line_of<'a>(text: &'a [u8], start: usize, len: usize) -> &'a [u8] {
+// line_of returns
+//
+//     1. A slice of the line in the searched text which contains the substring
+//        indicated by start and len.
+//     2. The distance from the end of the match to the start of the next line.
+//
+//  The distance should be used to advance the matching frame to prevent finding
+//  two matches on the same line.
+fn line_of<'a>(text: &'a [u8], start: usize, len: usize) -> (&'a [u8], usize) {
     let mut line_start = start;
     let mut line_end = start + len;
 
@@ -219,7 +228,7 @@ fn line_of<'a>(text: &'a [u8], start: usize, len: usize) -> &'a [u8] {
         line_start -= 1;
     }
 
-    &text[line_start..line_end]
+    (&text[line_start..line_end], line_end - (start + len))
 }
 
 fn is_newline(c: u8) -> bool {
