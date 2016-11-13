@@ -80,18 +80,98 @@ struct Guide {
     // In this case, mismatch_skip[] yields pattern.len(), because all matching
     // frames aligning the last character and the mismatched character have
     // already been tested or skipped.
-    mismatch_skip: [usize; 256]
+    mismatch_skip: [usize; 256],
+
+    // matched_suffix_skip is a table such that, given any index j in the search
+    // pattern, yields the safe distance to skip ahead from the comparison
+    // index.
+    //
+    // This table is useful when the text in the matching frame shares some
+    // suffix with the search pattern.
+    //
+    // There are two cases:
+    //
+    // Case One: The shared suffix is also the prefix of the search pattern.
+    //
+    //     compare:    |
+    //     frame:         |
+    //     text:    lolgabcxabc
+    //     pattern: abcxabc
+    //
+    // matched_suffix_skip[j = 4] for this search pattern yields 7, because
+    // 'abc', the shared suffix, is also the prefix, so matching frames in
+    // between their alignment cannot be valid.
+    //
+    // Case Two: The shared suffix is repeated elsewhere in the search pattern.
+    //
+    //     compare:     |
+    //     frame:         |
+    //     text:    lolgxbcxabc
+    //     pattern: xbcxabc
+    //
+    // matched_suffix_skip[j = 5] for this search pattern yields 6, because
+    // 'bc', the shared suffix, is repeated elsewhere in the search pattern with
+    // a different character to its left.
+    matched_suffix_skip: Vec<usize>
 }
 
 impl Guide {
+    fn skip(&self, v: u8, i: usize) -> usize {
+        cmp::max(self.mismatch_skip[v as usize], self.matched_suffix_skip[i])
+    }
+
     fn from(pattern: &[u8]) -> Guide {
-        let mut mismatch_skip: [usize; 256] = [pattern.len(); 256];
-        for i in 0..(pattern.len() - 1) {
-            mismatch_skip[pattern[i] as usize] = pattern.len() - 1 - i;
-        }
         Guide{
-            mismatch_skip: mismatch_skip,
+            mismatch_skip: Guide::build_mismatch_skips(pattern),
+            matched_suffix_skip: Guide::build_matched_suffix_skips(pattern),
         }
+    }
+
+    fn build_mismatch_skips(pattern: &[u8]) -> [usize; 256] {
+        let mut skips: [usize; 256] = [pattern.len(); 256];
+        for i in 0..(pattern.len() - 1) {
+            skips[pattern[i] as usize] = pattern.len() - 1 - i;
+        }
+        skips
+    }
+
+    fn build_matched_suffix_skips(pattern: &[u8]) -> Vec<usize> {
+        let end = pattern.len() - 1;
+        let mut skips = vec![0; pattern.len()];
+
+        // next_prefix is the skip to the next instance of the prefix in the
+        // search pattern.
+        let mut next_prefix = end;
+        for i in (0..end).rev() {
+            if Guide::is_prefix(pattern, &pattern[i + 1..]) {
+                next_prefix = i + 1;
+            }
+            // Set the skip for a given index to the skip required to align the
+            // matching frame with the next instance of the search pattern's
+            // prefix.
+            skips[i] = next_prefix + end - i
+        }
+
+        for i in 0..pattern.len() - 1 {
+            let suflen = Guide::suffix_len(pattern, &pattern[1..i+1]);
+            if pattern[i - suflen] != pattern[end - suflen] {
+                skips[end - suflen] = suflen + end - i;
+            }
+        }
+
+        skips
+    }
+
+    // is_prefix returns whether text begins with prefix.
+    fn is_prefix(text: &[u8], prefix: &[u8]) -> bool {
+        (0..prefix.len()).all(|i| i < text.len() && text[i] == prefix[i])
+    }
+
+    // suffix_len returns the length of the suffix a and b share.
+    fn suffix_len(a: &[u8], b: &[u8]) -> usize {
+        (0..cmp::min(a.len(), b.len()))
+            .take_while(|i| a[a.len() - 1 - i] == b[b.len() - 1 - i])
+            .count()
     }
 }
 
@@ -118,7 +198,7 @@ pub fn search<'a>(text: &'a [u8], pattern: &[u8]) -> Option<&'a [u8]> {
             return Some(line_of(text, i + 1, pattern.len()));
         }
 
-        frame = cmp::max(frame + 1, i + guide.mismatch_skip[text[i] as usize]);
+        frame += guide.skip(text[i], j - 1);
     }
     None
 }
