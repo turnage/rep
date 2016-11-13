@@ -40,6 +40,15 @@ fn test_search() {
             lines: vec!["..280.."],
         },
         TestCase{
+            text: "match Stefan Burnett match
+                   Zach Porterro Hill
+                   but not this one",
+            pattern: "match",
+            lines: vec![
+                "match Stefan Burnett match",
+            ],
+        },
+        TestCase{
             text: "1\n..280..\n3",
             pattern: "7",
             lines: vec![],

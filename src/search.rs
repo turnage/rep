@@ -214,8 +214,8 @@ pub fn search<'a>(text: &'a [u8], pattern: &[u8]) -> Vec<&'a [u8]> {
 //        indicated by start and len.
 //     2. The distance from the end of the match to the start of the next line.
 //
-//  The distance should be used to advance the matching frame to prevent finding
-//  two matches on the same line.
+// The distance should be used to advance the matching frame to prevent finding
+// two matches on the same line.
 fn line_of<'a>(text: &'a [u8], start: usize, len: usize) -> (&'a [u8], usize) {
     let mut line_start = start;
     let mut line_end = start + len;
@@ -228,7 +228,7 @@ fn line_of<'a>(text: &'a [u8], start: usize, len: usize) -> (&'a [u8], usize) {
         line_start -= 1;
     }
 
-    (&text[line_start..line_end], line_end - (start + len))
+    (&text[line_start..line_end], line_end - (start + len) + 1)
 }
 
 fn is_newline(c: u8) -> bool {
