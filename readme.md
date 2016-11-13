@@ -26,3 +26,13 @@ real    0m1.137s
 user    0m1.024s
 sys     0m0.088s
 ````
+
+#### November 16th, 2016 16:28 PT
+
+I implemented Boyer-Moore-Horspool and cut ~400ms.
+
+````
+real    0m0.754s
+user    0m0.660s
+sys     0m0.072s
+````
