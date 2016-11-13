@@ -184,12 +184,12 @@ pub fn search<'a>(text: &'a [u8], pattern: &[u8]) -> Vec<&'a [u8]> {
     // Iterate over all the matching frames. This loop will only shift the
     // matching frame to the right along the searched text, never left.
     while frame < text.len() {
-        let mut i = frame;
+        let mut i = frame + 1;
         let mut j = pattern.len();
 
         // Compare the pattern to the text in the matching frame starting at the
         // last byte in the frame and iterating backward.
-        while j > 0 && text[i] == pattern[j - 1] {
+        while j > 0 && i > 0 && text[i - 1] == pattern[j - 1] {
             i -= 1;
             j -= 1;
         }
@@ -197,10 +197,10 @@ pub fn search<'a>(text: &'a [u8], pattern: &[u8]) -> Vec<&'a [u8]> {
         // If we reached the end of the pattern, the entire matching frame
         // matched, so we record this match.
         if j == 0 {
-            lines.push(line_of(text, i + 1, pattern.len()));
+            lines.push(line_of(text, i, pattern.len()));
             frame += pattern.len();
         } else {
-            frame += guide.skip(text[i], j - 1);
+            frame += guide.skip(text[i - 1], j - 1);
         }
     }
 
